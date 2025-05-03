@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Password Generator - Cyber Style</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+    }
+    .password-strength {
+      height: 4px;
+      margin-top: 4px;
+      transition: all 0.3s ease;
+    }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 4px;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .toast.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-green-400 min-h-screen flex flex-col justify-center items-center p-4">
+
+  <div class="bg-gray-800 border border-green-500 rounded-xl shadow-xl p-6 w-full max-w-md">
+    <h1 class="text-2xl font-bold text-green-300 mb-4 text-center">⚡ Password Generator ⚡</h1>
+
+    <div class="mb-4">
+      <label for="strength" class="block mb-2">Select Strength:</label>
+      <select id="strength" class="w-full p-2 mb-2 rounded bg-gray-700 text-green-300 border border-green-400">
+        <option value="weak">Weak (8 chars)</option>
+        <option value="standard" selected>Standard (12 chars)</option>
+        <option value="strong">Strong (16 chars)</option>
+        <option value="very-strong">Very Strong (20 chars)</option>
+      </select>
+      <div class="password-strength bg-gray-700 rounded-full">
+        <div id="strengthIndicator" class="password-strength rounded-full h-full" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <div class="mb-4">
+      <label class="block mb-1">Password Length: <span id="lengthValue">12</span></label>
+      <input type="range" id="lengthSlider" min="8" max="32" value="12" class="w-full" oninput="updateLengthValue()">
+    </div>
+
+    <div class="mb-4">
+      <label class="block mb-1">Include:</label>
+      <div class="flex flex-wrap gap-4">
+        <label class="inline-flex items-center">
+          <input type="checkbox" id="uppercase" checked class="rounded bg-gray-700 border-green-400 text-green-500 focus:ring-green-500">
+          <span class="ml-2">A-Z</span>
+        </label>
+        <label class="inline-flex items-center">
+          <input type="checkbox" id="lowercase" checked class="rounded bg-gray-700 border-green-400 text-green-500 focus:ring-green-500">
+          <span class="ml-2">a-z</span>
+        </label>
+        <label class="inline-flex items-center">
+          <input type="checkbox" id="numbers" checked class="rounded bg-gray-700 border-green-400 text-green-500 focus:ring-green-500">
+          <span class="ml-2">0-9</span>
+        </label>
+        <label class="inline-flex items-center">
+          <input type="checkbox" id="symbols" checked class="rounded bg-gray-700 border-green-400 text-green-500 focus:ring-green-500">
+          <span class="ml-2">!@#$%</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="mb-4">
+      <label class="block mb-1">Generated Password:</label>
+      <div class="flex items-center gap-2">
+        <div id="passwordOutput" class="bg-black text-green-300 p-2 rounded font-mono flex-1 break-all min-h-10">Click Generate</div>
+        <button onclick="copyPassword()" title="Copy" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors">📋</button>
+      </div>
+    </div>
+
+    <div class="flex gap-2">
+      <button onclick="generatePassword()" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors">
+        Generate
+      </button>
+      <button onclick="regeneratePassword()" title="Regenerate" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition-colors">
+        ⟳
+      </button>
+    </div>
+  </div>
+
+  <footer class="mt-8 text-sm text-green-500 text-center">
+    © 2025 Ijajkey. All rights reserved.
+  </footer>
+
+  <div id="toast" class="toast">Password copied to clipboard!</div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      updateStrengthIndicator();
+      generatePassword();
+    });
+
+    function updateLengthValue() {
+      const slider = document.getElementById('lengthSlider');
+      const valueDisplay = document.getElementById('lengthValue');
+      valueDisplay.textContent = slider.value;
+    }
+
+    function updateStrengthIndicator() {
+      const strength = document.getElementById('strength').value;
+      const indicator = document.getElementById('strengthIndicator');
+      
+      let width, color;
+      switch(strength) {
+        case 'weak':
+          width = '25%';
+          color = 'bg-red-500';
+          break;
+        case 'standard':
+          width = '50%';
+          color = 'bg-yellow-500';
+          break;
+        case 'strong':
+          width = '75%';
+          color = 'bg-blue-500';
+          break;
+        case 'very-strong':
+          width = '100%';
+          color = 'bg-green-500';
+          break;
+      }
+      
+      indicator.className = `password-strength rounded-full h-full ${color}`;
+      indicator.style.width = width;
+    }
+
+    function getSelectedChars() {
+      let chars = '';
+      
+      if (document.getElementById('uppercase').checked) {
+        chars += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      }
+      if (document.getElementById('lowercase').checked) {
+        chars += 'abcdefghijklmnopqrstuvwxyz';
+      }
+      if (document.getElementById('numbers').checked) {
+        chars += '0123456789';
+      }
+      if (document.getElementById('symbols').checked) {
+        chars += '!@#$%^&*()_+{}[]:;<>,.?/~`|';
+      }
+      
+      // Default to letters and numbers if nothing is selected
+      if (!chars) {
+        chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      }
+      
+      return chars;
+    }
+
+    function generatePassword() {
+      const strength = document.getElementById('strength').value;
+      let length = document.getElementById('lengthSlider').value;
+      const chars = getSelectedChars();
+      
+      // Adjust length based on strength if slider is at default
+      if (strength === 'weak' && length === '12') length = 8;
+      else if (strength === 'standard' && length === '12') length = 12;
+      else if (strength === 'strong' && length === '12') length = 16;
+      else if (strength === 'very-strong' && length === '12') length = 20;
+      
+      let password = '';
+      const charArray = new Uint32Array(length);
+      window.crypto.getRandomValues(charArray);
+      
+      for (let i = 0; i < length; i++) {
+        password += chars[charArray[i] % chars.length];
+      }
+      
+      document.getElementById('passwordOutput').textContent = password;
+      updateStrengthIndicator();
+    }
+
+    function regeneratePassword() {
+      generatePassword();
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+
+    function copyPassword() {
+      const password = document.getElementById('passwordOutput').textContent;
+      if (!password || password === 'Click Generate') {
+        showToast('Generate a password first!');
+        return;
+      }
+      
+      navigator.clipboard.writeText(password).then(() => {
+        showToast('Password copied to clipboard!');
+      }).catch(err => {
+        showToast('Failed to copy!');
+        console.error(err);
+      });
+    }
+
+    // Update strength indicator when selection changes
+    document.getElementById('strength').addEventListener('change', updateStrengthIndicator);
+  </script>
+</body>
+</html>
